@@ -9,7 +9,7 @@ import copy
 #sklearn headers##################################
 from sklearn.metrics import zero_one_loss
 import xgboost as xgb
-from sklearn import metrics   
+from sklearn import metrics
 from sklearn.metrics import roc_auc_score, accuracy_score
 from sklearn.model_selection import KFold
 import itertools
@@ -29,8 +29,8 @@ def CI_sampler_conditional_kNN(X_in,Y_in,Z_in,train_len = -1, k = 1):
     	X_in: Samples of r.v. X (np.array)
     	Y_in: Samples of r.v. Y (np.array)
     	Z_in: Samples of r.v. Z (np.array)
-    	train_len: length of training set, must be less than number of samples 
-    	k: k-nearest neighbor to be used: Always set k = 1. 
+    	train_len: length of training set, must be less than number of samples
+    	k: k-nearest neighbor to be used: Always set k = 1.
 
     	Xtrain: Features for training the classifier
     	Ytrain: Train Labels
@@ -66,10 +66,10 @@ def CI_sampler_conditional_kNN(X_in,Y_in,Z_in,train_len = -1, k = 1):
     assert (type(X_in) == np.ndarray),"Not an array"
     assert (type(Y_in) == np.ndarray),"Not an array"
     assert (type(Z_in) == np.ndarray),"Not an array"
-    
+
     nx,dx = X_in.shape
     ny,dy = Y_in.shape
-    nz,dz = Z_in.shape 
+    nz,dz = Z_in.shape
 
     assert (nx == ny), "Dimension Mismatch"
     assert (nz == ny), "Dimension Mismatch"
@@ -80,7 +80,7 @@ def CI_sampler_conditional_kNN(X_in,Y_in,Z_in,train_len = -1, k = 1):
     Xset = range(0,dx)
     Yset = range(dx,dx + dy)
     Zset = range(dx + dy,dx + dy + dz)
-    
+
     if train_len == -1:
     	train_len = 2*len(X_in)/3
 
@@ -109,7 +109,7 @@ def CI_sampler_conditional_kNN(X_in,Y_in,Z_in,train_len = -1, k = 1):
     l,m = train.shape
     Xtrain = train[:,0:m-1]
     Ytrain = train[:,m-1]
-    
+
     test = samples[train_len::,:]
     test_2 = copy.deepcopy(test)
     X = test_2[:,Xset]
@@ -133,44 +133,44 @@ def CI_sampler_conditional_kNN(X_in,Y_in,Z_in,train_len = -1, k = 1):
     l,m = test.shape
     Xtest = test[:,0:m-1]
     Ytest = test[:,m-1]
-    
+
     CI_data = np.vstack([train2,test2])
-    
-    
+
+
     return Xtrain,Ytrain,Xtest,Ytest,CI_data
 
 
 def create_Itest_data(X,Y):
     nx = len(X)
     hx = nx/2
-    
+
     I = np.random.choice(nx,size = hx, replace=False)
     S = set(range(nx))
     S = S.difference(set(I))
     S = list(S)
-    
+
     X1 = X[I,:]
     X2 = X[S,:]
-    
+
     Y1 = Y[I,:]
     Y2 = Y[S,:]
-    
+
     train1 = np.hstack([X1,Y1,np.ones([len(X1),1])])
     train2 = np.hstack([X2,Y2[np.random.permutation(len(Y2)),:],np.zeros([len(Y2),1])])
-    
+
     train = np.vstack([train1,train2])
-    
+
     train = train[np.random.permutation(len(train)),:]
     n,m = train.shape
     Xtrain = train[:,0:m-1]
     Ytrain = train[:,m-1]
-    
+
     return Xtrain,Ytrain
 
 
 
 def XGB_crossvalidated_model(max_depths, n_estimators, colsample_bytrees,Xtrain,Ytrain,nfold,feature_selection = 0,nthread = 8):
-    '''Function returns a cross-validated hyper parameter tuned model for the training data 
+    '''Function returns a cross-validated hyper parameter tuned model for the training data
     Arguments:
     	max_depths: options for maximum depth eg: input [6,10,13], this will choose the best max_depth among the three
     	n_estimators: best number of estimators to be chosen from this. eg: [200,150,100]
@@ -182,7 +182,7 @@ def XGB_crossvalidated_model(max_depths, n_estimators, colsample_bytrees,Xtrain,
     Output:
     	model: Trained model with good hyper-parameters
     	features : Coordinates of selected features, if feature_selection = 0
-    	bp: Dictionary of tuned parameters 
+    	bp: Dictionary of tuned parameters
 
     This procedure is CPU intensive. So, it is advised to not provide too many choices of hyper-parameters
     '''
@@ -195,7 +195,7 @@ def XGB_crossvalidated_model(max_depths, n_estimators, colsample_bytrees,Xtrain,
     if feature_selection == 1:
         features = np.where(imp == 0)[0]
         Xtrain = Xtrain[:,features]
-    
+
     bp = {'max_depth':[0],'n_estimator':[0], 'colsample_bytree' : [0] }
     classifiers['model'] = xgb.XGBClassifier( nthread = nthread, learning_rate =0.02, n_estimators=100, max_depth=6,min_child_weight=1, gamma=0, subsample=0.8, colsample_bytree=0.9,objective= 'binary:logistic',scale_pos_weight=1, seed=11)
     classifiers['train_X'] = Xtrain
@@ -210,7 +210,7 @@ def XGB_crossvalidated_model(max_depths, n_estimators, colsample_bytrees,Xtrain,
             pos = r
     bp['max_depth'] = pos
     #print pos
-    
+
     maxi = 0
     pos = 0
     for r in n_estimators:
@@ -219,10 +219,10 @@ def XGB_crossvalidated_model(max_depths, n_estimators, colsample_bytrees,Xtrain,
         if maxi < score:
             maxi = score
             pos = r
-    
+
     bp['n_estimator'] = pos
     #print pos
-    
+
     maxi = 0
     pos = 0
     for r in colsample_bytrees:
@@ -231,10 +231,10 @@ def XGB_crossvalidated_model(max_depths, n_estimators, colsample_bytrees,Xtrain,
         if maxi < score:
             maxi = score
             pos = r
-            
+
     bp['colsample_bytree'] = pos
     model = xgb.XGBClassifier( nthread=nthread,learning_rate =0.02, n_estimators=bp['n_estimator'], max_depth=bp['max_depth'],min_child_weight=1, gamma=0, subsample=0.8, colsample_bytree=bp['colsample_bytree'],objective= 'binary:logistic',scale_pos_weight=1, seed=11).fit(Xtrain,Ytrain)
-    
+
     return model,features,bp
 
 
@@ -244,7 +244,7 @@ def cross_validate(classifier, n_folds = 5):
     train_y = classifier['train_y']
     model = classifier['model']
     score = 0.0
-    
+
     skf = KFold(n_splits = n_folds)
     for train_index, test_index in skf.split(train_X):
         X_train, X_test = train_X[train_index], train_X[test_index]
@@ -259,7 +259,7 @@ def cross_validate(classifier, n_folds = 5):
 
 def XGBOUT2(bp, all_samples,train_samp,Xcoords, Ycoords, Zcoords,k,threshold,nthread,bootstrap = True):
     '''Function that takes a CI test data-set and returns classification accuracy after Nearest-Neighbor  Bootstrap'''
-    
+
     num_samp = len(all_samples)
     if bootstrap:
         np.random.seed()
@@ -290,7 +290,7 @@ def XGBOUT2(bp, all_samples,train_samp,Xcoords, Ycoords, Zcoords,k,threshold,nth
 
 def XGBOUT_Independence(bp, all_samples,train_samp,Xcoords, Ycoords, k,threshold,nthread,bootstrap = True):
     '''Function that takes a CI test data-set and returns classification accuracy after Nearest-Neighbor  Bootstrap'''
-    
+
     num_samp = len(all_samples)
     if bootstrap:
         np.random.seed()
@@ -304,7 +304,7 @@ def XGBOUT_Independence(bp, all_samples,train_samp,Xcoords, Ycoords, k,threshold
     if s2 >= 4:
         model = xgb.XGBClassifier(nthread=nthread,learning_rate =0.02, n_estimators=bp['n_estimator'], max_depth=bp['max_depth'],min_child_weight=1, gamma=0, subsample=0.8, colsample_bytree=bp['colsample_bytree'],objective= 'binary:logistic',scale_pos_weight=1, seed=11)
     else:
-        model = xgb.XGBClassifier() 
+        model = xgb.XGBClassifier()
     gbm = model.fit(Xtrain,Ytrain)
     pred = gbm.predict_proba(Xtest)
     pred_exact = gbm.predict(Xtest)
@@ -407,15 +407,15 @@ def CCIT(X,Y,Z,max_depths = [6,10,13], n_estimators=[100,200,300], colsample_byt
         max_depths : eg. [6,10,13] list of parameters for depth of tree in xgb for tuning
         n_estimators: eg. [100,200,300] list of parameters for number of estimators for xgboost for tuning
         colsample_bytrees: eg. recommended [0.8] list of parameters for colsample_bytree for xgboost for tuning
-        nfold: n-fold cross validation 
+        nfold: n-fold cross validation
         feature_selection : default 0 recommended
-        train_samp: -1 recommended. Number of examples out of total to be used for training. 
+        train_samp: -1 recommended. Number of examples out of total to be used for training.
         threshold: defualt recommended
-        num_iter: Number of Bootstrap Iterations. Default 10. Recommended 30. 
-        nthread: Number of parallel thread for running XGB. Recommended number of cores in the CPU. Default 8. 
+        num_iter: Number of Bootstrap Iterations. Default 10. Recommended 30.
+        nthread: Number of parallel thread for running XGB. Recommended number of cores in the CPU. Default 8.
 
-        Output: 
-        pvalue of the test. 
+        Output:
+        pvalue of the test.
      '''
 
     if Z is None:
@@ -433,15 +433,15 @@ def CCIT(X,Y,Z,max_depths = [6,10,13], n_estimators=[100,200,300], colsample_byt
             train_len = (2*nx)/3
 
         dic = bootstrap_XGB_Independence(max_depths = max_depths, n_estimators=n_estimators, colsample_bytrees=colsample_bytrees,nfold=nfold,feature_selection=0,all_samples=all_samples,train_samp = train_len,Xcoords = Xset, Ycoords = Yset,k = k,threshold = threshold,num_iter = num_iter,nthread = nthread,bootstrap = bootstrap)
-        return dic['pval']
-    
+        return dic
+
     assert (type(X) == np.ndarray),"Not an array"
     assert (type(Y) == np.ndarray),"Not an array"
     assert (type(Z) == np.ndarray),"Not an array"
-    
+
     nx,dx = X.shape
     ny,dy = Y.shape
-    nz,dz = Z.shape 
+    nz,dz = Z.shape
 
     assert (nx == ny), "Dimension Mismatch"
     assert (nz == ny), "Dimension Mismatch"
@@ -463,5 +463,5 @@ def CCIT(X,Y,Z,max_depths = [6,10,13], n_estimators=[100,200,300], colsample_byt
 
     dic = bootstrap_XGB2(max_depths = max_depths, n_estimators=n_estimators, colsample_bytrees=colsample_bytrees,nfold=nfold,feature_selection=0,all_samples=all_samples,train_samp = train_len,Xcoords = Xset, Ycoords = Yset, Zcoords = Zset ,k = k,threshold = threshold,num_iter = num_iter,nthread = nthread,bootstrap = bootstrap)
 
-    return dic['pval']
-    
+    return dic
+
